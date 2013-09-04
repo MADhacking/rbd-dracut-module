@@ -22,7 +22,10 @@ installkernel()
 install()
 {
     inst rbd
+    inst ceph-rbdnamer
+	inst /etc/ceph/ceph.conf
     inst_hook cmdline 90 "$moddir/parse-rbdroot.sh"
     inst_script "$moddir/rbdroot.sh" "/sbin/rbdroot"
+    inst_rules 50-rbd.rules
     dracut_need_initqueue
 }
