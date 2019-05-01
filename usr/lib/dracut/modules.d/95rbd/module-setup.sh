@@ -21,6 +21,8 @@ installkernel()
 
 install()
 {
+    inst haveged
+    inst pkill
     inst rbd
     inst ceph-rbdnamer
 	inst /etc/ceph/ceph.conf

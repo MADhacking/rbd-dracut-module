@@ -30,6 +30,10 @@ type write_fs_tab >/dev/null 2>&1 || . /lib/fs-lib.sh
 # Ensure the PATH is sufficiently encompassing.
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
+# Ensure we have sufficient entropy available.
+echo "Seeding /dev/random with haveged"
+haveged
+
 # Attempt to map the rbd device.
 rbd map $rbd_name --pool $rbd_pool || die "Unable to mount rbd device \"$rbd_name\" from pool \"$rbd_pool\""
 wait_for_dev /dev/rbd/$rbd_pool/$rbd_name
@@ -40,6 +44,9 @@ ln -s /dev/rbd/$rbd_pool/$rbd_name /dev/root
 # Create an fstab entry for our root filesystem.
 write_fs_tab /dev/root "$rbd_fstype" "$rbd_rootflags"
 wait_for_dev /dev/root
+
+# Kill haveged, if the user wants it they can start it themselves.
+pkill -x haveged
 
 # We should be done!
 exit 0
