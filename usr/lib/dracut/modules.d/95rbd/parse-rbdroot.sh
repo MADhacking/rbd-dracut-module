@@ -1,12 +1,12 @@
 #! /bin/sh
 
-# Preferred format:
-#       root=rbd:pool:name:monitors[:fstype[:rootflags]]
+# Required format:
+#       root=rbd:pool:name:fstype:rootflags
 
 # Sadly there's no easy way to split ':' separated lines into variables
 root_to_vars()
 {
-    local v=${1}:
+    v=${1}:
     set --
     while [ -n "$v" ]; do
         set -- "$@" "${v%%:*}"
@@ -14,7 +14,10 @@ root_to_vars()
     done
 
     unset rbd_pool rbd_name rbd_fstype rbd_rootflags
-    rbd_pool=$2; rbd_name=$3; rbd_fstype=$4; rbd_rootflags=$5;
+    export rbd_pool=$2
+    export rbd_name=$3
+    export rbd_fstype=$4
+    export rbd_rootflags=$5
 }
 
 # This script is sourced, so root should be set. But let's be paranoid
@@ -25,7 +28,10 @@ root_to_vars()
 if [ "${root%%:*}" = "rbd" ] ; then
 	
     # Don't continue if root is ok
-    [ -n "$rootok" ] && return
+    if [ -n "$rootok" ]; then
+    	warn "root is already OK, we won't try to mount an rbd volume"
+    	exit
+    fi
 
     if [ -n "$netroot" ] ; then
         warn "root takes precedence over netroot. Ignoring netroot"
@@ -35,10 +41,13 @@ if [ "${root%%:*}" = "rbd" ] ; then
 fi
 
 # If it's not rbd we don't continue
-[ "${netroot%%:*}" != "rbd" ] && return
+if [ "${netroot%%:*}" != "rbd" ]; then
+	warn "We do not appear to have an rbd root specified as a kernel parameter"
+	exit
+fi
 
 # Check required arguments
-root_to_vars $netroot
+root_to_vars "$netroot"
 [ -z "$rbd_pool" ] && die "Argument pool for rbd root is missing"
 [ -z "$rbd_name" ] && die "Argument name for rbd root is missing"
 
